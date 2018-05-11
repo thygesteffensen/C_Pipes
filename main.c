@@ -2,10 +2,11 @@
 #include<stdlib.h>
 
 struct Pipes{
-    int x1, x2, y1, y2, water, input;
+    int x1, x2, y1, y2, water, isUpdated, input;
 };
 struct Pipes *pip;
 struct Pipes *pipOrder;
+void fullyCovered(int j);
 
 int main() {
     //
@@ -36,56 +37,134 @@ int main() {
         }
         pip[i].input = i;
         pip[i].water = pip[i].x2 - pip[i].x1;
+        printf("%d\n", pip[i].water);
+        pip[i].isUpdated = 0;
     }
     //
     // Ordering the pipes
     //
     // The order is stored in an int array.
 
-
+    int ix1, ix2 , iy1, iy2, jx1, jx2, jy1, jy2;
 
     //
     // Calculate water.
     //
     for (int j = 0; j < numberOfPipes; ++j) {
         int key = 0;
-        for (int i = 0; i < numberOfPipes; ++i) { // j is beneath i
-            int candidateKey = 0;
-            if(pip[j].y1 < pip[i].y1 || pip[j].y2 < pip[i].y2 || pip[j].y2 < pip[i].y1 || pip[j].y1 <pip[i].y2){ // If true, then pipe j could be covered by pipe i
-                //puts("Candidate");
-                if(pip[i].x1 < pip[j].x1 && pip[i].x2 > pip[j].x1 ||
-                        pip[i].x2 > pip[j].x2 && pip[i].x1 < pip[j].x2 ||
-                        pip[i].x1 > pip[j].x1 && pip[i].x2 < pip[j].x2){ // If true, then pipe i covers pipe j.
-                    //puts("Some water gets modified");
-                    /* Fully covered */
-                    if(pip[j].x1 < pip[i].x1 && pip[j].x2 > pip[i].x2){
-                        candidateKey = 0;
-                        //puts("Fully covered");
+        int rightX = pip[j+1].x2; // FROM THE RIGHT
+        int leftX = 0; // FROM THE LEFT
+        int partlyRight = pip[j].x2;
+        int partlyLeft = pip[j].x1;
+        for (int i = j + 1; i < numberOfPipes; ++i) { // j is beneath i
+            ix1 = pip[i].x1, ix2 = pip[i].x2, iy1 = pip[i].y1, iy2 =pip[i].y2,
+                    jx1 = pip[j].x1, jx2 = pip[j].x2, jy1 = pip[j].y1, jy2 =pip[j].y2;
+            /* Find the smallest and highest point on every pipe */
+            int smallest;
+            if(pip[j].y1 <= pip[j].y2){
+                smallest = pip[j].y1;
+            }
+            else{
+                smallest = pip[j].y2;
+            }
+            int highest;
+            if(pip[i].y1 >= pip[i].y2){
+                highest = pip[i].y1;
+            }
+            else{
+                highest = pip[i].y2;
+            }
+            if(highest >= smallest){
+            //if(pip[j].y1 < pip[i].y1 || pip[j].y2 < pip[i].y2 || pip[j].y2 < pip[i].y1 || pip[j].y1 <pip[i].y2){ // If true, then pipe j could be covered by pipe i
+
+                puts("Candidate");
+                /* Fully covered */
+                if(pip[i].x1 < pip[j].x1 && pip[i].x2 > pip[j].x2){
+                    fullyCovered(j);
+                }
+                /* Is it at all covered? */
+                if(pip[i].x2 > pip[j].x1 || pip[i].x1 < pip[j].x2) {
+                    /* Is it covered to the right or to the left?
+                     * Finds the x value, which covers the pipe
+                     * the most, from each side...*/
+                    /* To the left */
+                    if (pip[i].x1 > pip[j].x1) {
+                        if (pip[i].x2 > leftX) {
+                            leftX = pip[i].x1;
+                        }
                     }
-                    /* Partly covered */
-                    else if(pip[j].x1 > pip[i].x1 && pip[j].x2 < pip[i].x2){
-                        candidateKey = pip[i].water - (pip[j].x1 + pip[j].x2);
-                        //puts("Partly covered");
+                    /* To the right */
+                    else if (pip[i].x2 < pip[j].x2) {
+                        if (pip[i].x2 < rightX) {
+                            rightX = pip[i].x2;
+                        }
                     }
-                    /* Half covered - To the left */
-                    else if(pip[j].x1 > pip[i].x1){
-                        candidateKey = pip[j].x2 - pip[i].x2;
-                        //puts("Half covered 1");
+
+                }
+                /* Partly covered */ // = are added recent... could be removed
+                if(pip[i].x1 >= pip[j].x1 && pip[i].x2 <= pip[j].x2){
+                    if(partlyLeft > pip[i].x1){
+                        partlyLeft = pip[i].x1;
                     }
-                    /* Half covered - To the right */
-                    else if(pip[j].x2 < pip[i].x2){
-                        candidateKey = pip[i].x1 - pip[j].x1;
-                        //puts("Half covered 1");
-                    }
-                    /* Decides if to update key */
-                    if(candidateKey > key){
-                        key = candidateKey;
+                    if(partlyRight < pip[i].x2){
+                        partlyRight = pip[i].x2;
                     }
                 }
             }
         }
-        printf("The key is %d\n", key);
-        pip[j].water = pip[j].water - key;
+        puts("Breek");
+        /* Now I update the water for pipe j
+         * I went through every pipe above j
+         * and stored the value, that covers
+         * the pipe the most
+         */
+        if(pip[j].isUpdated == 1){
+            break;
+        }
+        if(partlyLeft == pip[j].x1 && partlyRight == pip[j].x2){
+            fullyCovered(j);
+            // If one or more partly i pipes, covers pipe j fully
+        }
+        else if(leftX == pip[j].x2 && rightX == pip[j].x1){
+            fullyCovered(j);
+            // If one or more right/left partly i pipes, covers
+            // pipe j fully.
+        }
+        else if((leftX == pip[j].x2 && partlyLeft == pip[j].x1) ||
+                (rightX == pip[j].x1 && partlyRight == pip[j].x2)){
+            fullyCovered(j);
+            // Rest of fully covered possibilities.
+        }
+        else if(leftX == rightX && leftX != 0){
+            fullyCovered(j);
+            // if to covers the whole pipe from both sides
+        }
+        else if(partlyLeft == 0 && partlyRight == 0){
+            // There is no partly covering pipes.
+            if(leftX == 0 && rightX != 0){
+//                int water = pip[j].water - (pip[j].x2 - rightX);
+//                int diff = pip[j].x2 - rightX;
+//                pip[j].water = water;
+//                printf("Water: %d\nDiff: %d\nrX: %d\npX: %d\n", water, diff, rightX, pip[j].x2);
+                pip[j].water = pip[j].water - (pip[j].x2 - rightX);
+            }
+            else if(rightX == 0 && leftX != 0){
+                pip[j].water = pip[j].water - (leftX - pip[j].x1);
+            }
+            else if(rightX != 0 && leftX != 0){
+                pip[j].water = pip[j].water - (leftX - pip[j].x1) + (pip[j].x2 - rightX);
+            }
+            pip[j].isUpdated = 1;
+        }
+        else if(leftX == 0 && rightX == 0){
+            // if their is no covering from the sides
+            pip[j].water = pip[j].water - (partlyRight - partlyLeft);
+            pip[j].isUpdated = 1;
+        }
+
+
+
+
     }
     //
     // Calculate water flow.
@@ -110,4 +189,10 @@ int main() {
     for (int j = 0; j < numberOfPipes; ++j) {
     printf("%d \n", pip[j].water);
     }
+}
+
+void fullyCovered(int j){
+    pip[j].water = 0;
+    pip[j].isUpdated = 1;
+    puts("Fully covered");
 }
