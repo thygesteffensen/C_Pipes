@@ -48,37 +48,44 @@ int main() {
     // Calculate water.
     //
     for (int j = 0; j < numberOfPipes; ++j) {
-        for (int i = 0; i < numberOfPipes; ++i) { // j is on the top, i is under
-            if(pip[j].y1 > pip[i].y1 || pip[j].y2 > pip[i].y2 || pip[j].y2 > pip[i].y1 || pip[j].y1 > pip[i].y2){ // If true, then pipe j could cover pipe i
+        int key = 0;
+        for (int i = 0; i < numberOfPipes; ++i) { // j is beneath i
+            int candidateKey = 0;
+            if(pip[j].y1 < pip[i].y1 || pip[j].y2 < pip[i].y2 || pip[j].y2 < pip[i].y1 || pip[j].y1 <pip[i].y2){ // If true, then pipe j could be covered by pipe i
                 //puts("Candidate");
-                if(pip[j].x1 < pip[i].x1 && pip[j].x2 > pip[i].x1 ||
-                        pip[j].x2 > pip[i].x2 && pip[j].x1 < pip[i].x2 ||
-                        pip[j].x1 > pip[i].x1 && pip[j].x2 < pip[i].x2){ // If true, then pipe j covers pipe i.
+                if(pip[i].x1 < pip[j].x1 && pip[i].x2 > pip[j].x1 ||
+                        pip[i].x2 > pip[j].x2 && pip[i].x1 < pip[j].x2 ||
+                        pip[i].x1 > pip[j].x1 && pip[i].x2 < pip[j].x2){ // If true, then pipe i covers pipe j.
                     //puts("Some water gets modified");
-                    // Fully covered
+                    /* Fully covered */
                     if(pip[j].x1 < pip[i].x1 && pip[j].x2 > pip[i].x2){
-                        pip[i].water = 0;
+                        candidateKey = 0;
                         //puts("Fully covered");
                     }
-                    // Partly covered
+                    /* Partly covered */
                     else if(pip[j].x1 > pip[i].x1 && pip[j].x2 < pip[i].x2){
-                        pip[i].water = pip[i].water - (pip[j].x1 + pip[j].x2);
+                        candidateKey = pip[i].water - (pip[j].x1 + pip[j].x2);
                         //puts("Partly covered");
                     }
-                    // Half covered - To the left
+                    /* Half covered - To the left */
                     else if(pip[j].x1 > pip[i].x1){
-                        pip[i].water = pip[j].x2 - pip[i].x2;
+                        candidateKey = pip[j].x2 - pip[i].x2;
                         //puts("Half covered 1");
                     }
-                    // Half covered - To the right
+                    /* Half covered - To the right */
                     else if(pip[j].x2 < pip[i].x2){
-                        pip[i].water = pip[i].x1 - pip[j].x1;
+                        candidateKey = pip[i].x1 - pip[j].x1;
                         //puts("Half covered 1");
+                    }
+                    /* Decides if to update key */
+                    if(candidateKey > key){
+                        key = candidateKey;
                     }
                 }
             }
-
         }
+        printf("The key is %d\n", key);
+        pip[j].water = pip[j].water - key;
     }
     //
     // Calculate water flow.
